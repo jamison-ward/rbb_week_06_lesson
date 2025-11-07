@@ -65,7 +65,7 @@ yao
 
 yao_sex_weight <- 
   yao %>% 
-  select(____________________)
+  select(sex, weight_kg)
 
 yao_sex_weight
 ```
@@ -93,7 +93,7 @@ yao_sex_weight
 We can arrange this data frame **by weight** like so:
 
 ```{r}
-yao_sex_weight %>% ____________________
+yao_sex_weight %>% arrange(weight_kg)
 ```
 
 As expected, **lower weights** have been brought to **the top of the data frame**.
@@ -102,8 +102,8 @@ If we first group the data, we could expect a different output:
 
 ```{r}
 yao_sex_weight %>% 
-  ____________________
-  ____________________
+  group_by(sex) %>% 
+  arrange(weight_kg)
 ```
 
 But as you see, the **arrangement is still the same**.
@@ -112,8 +112,8 @@ Only when we set the `.by_group` argument to `TRUE` do we get something differen
 
 ```{r}
 yao_sex_weight %>% 
-  ____________________
-  ____________________
+  group_by(sex) %>% 
+  arrange(weight_kg, .by_group = TRUE)  # Now data is arranged with all females first, then males
 ```
 
 The data is *first* sorted by sex (all women first), and then by weight.
@@ -126,7 +126,7 @@ The data is *first* sorted by sex (all women first), and then by weight.
 
 ```{r}
 yao_sex_weight %>% 
-  ____________________________
+  arrange(sex, weight_kg)
 ```
 
 The code `arrange(sex, weight_kg)` tells R to arrange the rows *first* by sex, and then by weight.
@@ -150,7 +150,7 @@ To sort by sex and weight, with the heaviest people on top, we can write:
 
 ```{r}
 yao_sex_weight %>% 
-  ___________________________
+  arrange(sex, desc(weight_kg))
 ```
 :::
 
@@ -161,8 +161,8 @@ With an `arrange()` call, sort the `sarcopenia` data first by sex and then by gr
 # Complete the code with your answer:
 Q_grip_strength_arranged <- 
   sarcopenia %>% 
-  select(______________________________) %>% 
-  arrange(______________________________)
+  select(sex_male_1_female_0, grip_strength_kg) %>% 
+  arrange(sex_male_1_female_0, grip_strength_kg)
 ```
 
 ```{r include = FALSE}
@@ -188,7 +188,12 @@ Then, with a nested `arrange()` call, arrange the data first by the newly-create
 ```{r eval = FALSE}
 # Complete the code with your answer:
 Q_age_group_height <- 
-  sarcopenia 
+  sarcopenia %>% 
+  mutate(age_group = factor(age_group,
+                            levels = c("Sixties",
+                                       "Seventies",
+                                       "Eighties"))) %>% 
+  arrange(age_group, height_meters)
 ```
 
 ```{r include = FALSE}
@@ -208,7 +213,7 @@ If we want to filter the data for the heaviest person, we could run:
 
 ```{r}
 yao_sex_weight %>% 
-  __________________________
+  filter(weight_kg == max(weight_kg))
 ```
 
 -   What if we want the heaviest man *and* the heaviest woman?
@@ -217,8 +222,8 @@ yao_sex_weight %>%
 
 ```{r}
 yao_sex_weight %>% 
-  __________________________
-  __________________________
+  group_by(sex) %>% 
+  filter(weight_kg == max(weight_kg))  # Returns the max weight for each group in the data set
 ```
 
 The code above can be read as "For each sex group, keep the row with the maximum `weight_kg` value".
@@ -229,7 +234,7 @@ For example, if we want to see the heaviest man and heaviest woman *per age grou
 
 ```{r}
 yao %>% 
-  group_by(__________________________) %>% 
+  group_by(sex, age_category) %>% 
   filter(weight_kg == max(weight_kg))
 ```
 
@@ -241,7 +246,7 @@ The output is a bit scattered: let's use `arrange()` to rearrange by sex and age
 yao %>% 
   group_by(sex, age_category) %>% 
   filter(weight_kg == max(weight_kg)) %>% 
-  arrange(_________________________)
+  arrange(sex, age_category)
 ```
 
 -   But we notice a weird arrangement of the age groups!
@@ -252,7 +257,11 @@ yao %>%
 
 ```{r}
 yao %>%
-  mutate(age_category = __________________________________________) %>%
+  mutate(age_category = factor(age_category, levels = c("5 - 14",
+                                                        "15 - 29",
+                                                        "30 - 44",
+                                                        "45 - 64",
+                                                        "65 +"))) %>%
   group_by(sex, age_category) %>%
   filter(weight_kg == max(weight_kg)) %>%
   arrange(sex, age_category)
@@ -266,7 +275,9 @@ Group the `sarcopenia` data frame by age group and sex, then filter for the high
 ```{r eval = FALSE}
 # Complete the code with your answer:
 Q_max_skeletal_muscle_index <- 
-  sarcopenia 
+  sarcopenia %>% 
+  group_by(age_group, sex_male_1_female_0) %>% 
+  filter(skeletal_muscle_index == max(skeletal_muscle_index))
 ```
 
 ```{r include = FALSE}
@@ -286,7 +297,7 @@ Let's first consider a regular `mutate()` call. Imagine that you wanted to add a
 
 ```{r}
 yao_sex_weight %>% 
-  _______________________________
+  mutate(rank_weight = rank(weight_kg))
 ```
 
 The output shows that the first row is the 901st lightest individual.
@@ -295,7 +306,7 @@ But it would be more intuitive to rank in descending order with the heaviest per
 
 ```{r}
 yao_sex_weight %>% 
-  mutate(_______________________________)
+  mutate(rank_weight = rank(desc(weight_kg)))
 ```
 
 The output shows that the person in the first row is the 71st heaviest individual.
@@ -310,8 +321,8 @@ The output shows that the person in the first row is the 71st heaviest individua
 
 ```{r}
 yao_sex_weight %>% 
-  _______________________
-  ______________________________________________
+  group_by(sex) %>% 
+  mutate(rank_weight = rank(desc(weight_kg)))
 ```
 
 Now we see that the person in the first row is the 53rd heaviest *woman*. (The .5 indicates that this rank is a tie with someone else in the data.)
@@ -322,7 +333,7 @@ We could also arrange for clarity:
 yao_sex_weight %>% 
   group_by(sex) %>% 
   mutate(weight_rank = rank(desc(weight_kg))) %>% 
-  _______________________
+  arrange(sex)
 ```
 
 ### Mutating with nested groupings
@@ -330,7 +341,7 @@ yao_sex_weight %>%
 ```{r}
 yao %>% 
   # let's group by sex and age category now !
-  group_by(_______________________) %>% 
+  group_by(sex, age_category) %>% 
   mutate(weight_rank = rank(desc(weight_kg)))
 ```
 
@@ -342,7 +353,9 @@ With the `sarcopenia` data, group by `age_group`, then in a new variable called 
 ```{r eval = FALSE}
 # Complete the code with your answer:
 Q_rank_grip_strength <- 
-  sarcopenia
+  sarcopenia %>% 
+  group_by(age_group) %>% 
+  mutate(grip_strength_rank = rank(grip_strength_kg))
 ```
 
 ```{r include = FALSE}
@@ -369,7 +382,7 @@ And now, you want to **filter** to get **the oldest person** in the data:
 
 ```{r}
 yao_modified %>% 
-  _____________________________
+  filter(age_years == max(age_years))
 ```
 
 -   You might be confused by the output! Why are there 55 rows of "oldest people"?
@@ -385,14 +398,14 @@ yao_modified <-
   yao %>% 
   group_by(sex, age_category) %>% 
   mutate(weight_rank = rank(desc(weight_kg))) %>% 
-  _______________________
+  ungroup()
 ```
 
 Now we can correctly obtain the oldest person/people in the data set:
 
 ```{r}
 yao_modified %>% 
-  _______________________
+  filter(age_years == max(age_years))
 ```
 :::
 
